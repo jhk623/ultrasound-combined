@@ -7,8 +7,7 @@ from confluent_kafka.avro import AvroProducer
 from requests.exceptions import ConnectionError as CE
 import read
 import urllib.request
-import test as face_detection
-import test_hopenet as angle_detection
+import detections as dt
 import image_process
 
 def process(image_url):
@@ -21,10 +20,10 @@ def process(image_url):
     image_process.main(filename)
 
     ### detect face from image and save data
-    face_detection.eval(t, f)
+    dt.eval(t, f)
 
     ### detect the angle of each face
-    angle_detection.test_model(angle_model)
+    dt.test_model(angle_model)
     ### remove tested image
     
     os.system("rm garconsdata/JPEGImages/%s" % filename)
@@ -128,8 +127,8 @@ class KafkaServerConnector:
         self.consumer.close()
 
 if __name__ == '__main__':
-    t,f = face_detection.construct_model()
-    angle_model = angle_detection.construct_model()
+    t,f = dt.construct_model1()
+    angle_model = dt.construct_model2()
 
     wrapper = KafkaServerConnector()
     wrapper.start()
