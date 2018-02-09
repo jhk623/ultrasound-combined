@@ -59,5 +59,6 @@ def read():
 
     return output_list
 
-read()
+if __name__ == '__main__':
+    read()
 
