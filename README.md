@@ -2,6 +2,8 @@
 
 copy and paste this
 
+______________________________
+
 mkdir snapshots
 
 mkdir input
