@@ -8,7 +8,7 @@ def main(filename):
     imagepath = "./garconsdata/JPEGImages/"
     txtpath = "./garconsdata/ImageSets/Main/test.txt"
     filepath = "./garconsdata/Annotations/"
-    im1 = im.open(imagepath + file_name)
+    im1 = im.open(imagepath + filename)
     sz = im1.size
 
     # root tree

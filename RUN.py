@@ -5,12 +5,8 @@ from time import sleep
 from confluent_kafka import Consumer, Producer, KafkaError, avro
 from confluent_kafka.avro import AvroProducer
 from requests.exceptions import ConnectionError as CE
-from .read import read
-
-"""
-### download image from url
-url = "dfdfd"
-"""
+import read
+import urllib.request
 
 def process(filename):
 
@@ -28,6 +24,11 @@ def process(filename):
     
     ### 2018.01 JAEHONG KIM
 
+def download_image(image_url):
+
+    filename = image_url.split('/')[-1]
+    with open('./garconsdata/JPEGImages/{}'.format(filename), 'wb') as f:
+        f.write(urllib.request.urlopen(image_url).read())
 
 class KafkaServerConnector:
     def __init__(self):
@@ -61,12 +62,14 @@ class KafkaServerConnector:
         
         pk = data['pk']
         image_url = data['image']
-        filename = image_url.split['/'][-1]
+
+        download_image(image_url)
+
+        filename = image_url.split('/')[-1]
         
-        os.system("wget -P '{}' ./garconsdata/JPEGImages".format(image_url))
         process(filename)
 
-        detection_list = read()
+        detection_list = read.read()
         result_faces = []
 
         for t in detection_list:
@@ -113,8 +116,13 @@ class KafkaServerConnector:
             'is_detected': True
         }
 
+        print("0?")
         for face in result_faces:
+            print("face!")
             self.face_producer.produce(topic='core_babyface', value=face)
+            json_dict = json.dumps(face)
+            print(face)
+        print("1?")
         self.face_producer.flush()
 
         self.image_producer.produce(topic='core_babyimage', value=result_image)
@@ -124,6 +132,7 @@ class KafkaServerConnector:
 
 
     def start(self):
+        print('start')
         try:
             while True:
                 msg = self.consumer.poll(timeout=1.0)
@@ -146,6 +155,6 @@ class KafkaServerConnector:
         self.consumer.close()
 
 if __name__ == '__main__':
-    wrapper = kafka_module.KafkaServerConnector()
+    wrapper = KafkaServerConnector()
     wrapper.start()
 
