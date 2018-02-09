@@ -1,0 +1,2 @@
+INFO:root:Application Started
+INFO:tornado.access:200 POST /events (::1) 114.85ms
