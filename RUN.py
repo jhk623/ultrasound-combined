@@ -2,22 +2,29 @@ import os
 import sys
 import json
 from time import sleep
-from confluent_kafka import Consumer, Producer, KafkaError, avro
+from confluent_kafka import Consumer, Producer, KafkaError, avro, KafkaException
 from confluent_kafka.avro import AvroProducer
 from requests.exceptions import ConnectionError as CE
 import read
 import urllib.request
+import test as face_detection
+import test_hopenet as angle_detection
+import image_process
 
-def process(filename):
+def process(image_url):
+
+    filename = image_url.split('/')[-1]
+
+    download_image(image_url)
 
     ### generate readable data format from image
-    os.system("python3 image_process.py {}".format(filename))
+    image_process.main(filename)
 
     ### detect face from image and save data
-    os.system('python3 test.py')
+    face_detection.eval(t, f)
 
     ### detect the angle of each face
-    os.system("python code/test_hopenet.py")
+    angle_detection.test_model(angle_model)
     ### remove tested image
     
     os.system("rm garconsdata/JPEGImages/%s" % filename)
@@ -63,11 +70,7 @@ class KafkaServerConnector:
         pk = data['pk']
         image_url = data['image']
 
-        download_image(image_url)
-
-        filename = image_url.split('/')[-1]
-        
-        process(filename)
+        process(image_url)
 
         detection_list = read.read()
         result_faces = []
@@ -101,36 +104,6 @@ class KafkaServerConnector:
         print("Produced Messages")
 
 
-    def make_test_response(self, msg):
-        msg_json = msg.value().decode('utf-8')
-        data = json.loads(msg_json)
-        print("Consumed message {}".format(msg_json))
-        
-        pk = data['pk']
-        image_url = data['image']
-        result_faces = []
-        result_faces.append(result_face)
-        result_faces.append(result_face)
-        result_image = {
-            'id': pk,
-            'is_detected': True
-        }
-
-        print("0?")
-        for face in result_faces:
-            print("face!")
-            self.face_producer.produce(topic='core_babyface', value=face)
-            json_dict = json.dumps(face)
-            print(face)
-        print("1?")
-        self.face_producer.flush()
-
-        self.image_producer.produce(topic='core_babyimage', value=result_image)
-        self.image_producer.flush()
-
-        print("Produced Messages")
-
-
     def start(self):
         print('start')
         try:
@@ -155,6 +128,9 @@ class KafkaServerConnector:
         self.consumer.close()
 
 if __name__ == '__main__':
+    t,f = face_detection.construct_model()
+    angle_model = angle_detection.construct_model()
+
     wrapper = KafkaServerConnector()
     wrapper.start()
 
