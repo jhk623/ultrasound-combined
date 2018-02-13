@@ -1,14 +1,15 @@
+import detections as dt
 import os
 import sys
 import json
 from time import sleep
-from confluent_kafka import Consumer, Producer, KafkaError, avro, KafkaException
+from confluent_kafka import Consumer, Producer, KafkaError, avro, KafkaException, TopicPartition
 from confluent_kafka.avro import AvroProducer
 from requests.exceptions import ConnectionError as CE
 import read
 import urllib.request
-import detections as dt
 import image_process
+
 
 def process(image_url):
 
@@ -40,32 +41,37 @@ class KafkaServerConnector:
     def __init__(self):
         value_schema = avro.load('value.avsc')
         image_schema = avro.load('image.avsc')
-        self.bootstrap_server = '10.33.44.185:29092'
+        self.bootstrap_server = '10.33.44.185:29092, 10.33.44.185:39092, 10.33.44.185:19092'
         schema_url = 'http://10.33.44.185:8081'
         self.consumer = Consumer({
             'bootstrap.servers': self.bootstrap_server,
             'client.id': 'image_consumer_1',
-            'group.id': 'image_consumer_group_1'
+            'group.id': 'image_consumer_group_1',
+            'auto.offset.reset': 'smallest'
         })
         self.consumer.subscribe(['face_detection'])
         
         self.face_producer = AvroProducer({
-            'client.id':'crd_producer_1',
+            'client.id':'face_producer_1',
             'bootstrap.servers': self.bootstrap_server,
             'schema.registry.url': schema_url
         }, default_value_schema=value_schema)
         
         self.image_producer = AvroProducer({
-            'client.id':'crd_producer_2',
+            'client.id':'image_producer_2',
             'bootstrap.servers': self.bootstrap_server,
             'schema.registry.url': schema_url
         }, default_value_schema=image_schema)
 
+        for i in range(5):
+            print(self.consumer.committed([TopicPartition('face_detection', i)]))
+
     def make_response(self, msg):
         msg_json = msg.value().decode('utf-8')
         data = json.loads(msg_json)
+        for i in range(5):
+             print(self.consumer.committed([TopicPartition('face_detection', i)]))
         print("Consumed message {}".format(msg_json))
-        
         pk = data['pk']
         image_url = data['image']
 
@@ -107,7 +113,8 @@ class KafkaServerConnector:
         print('start')
         try:
             while True:
-                msg = self.consumer.poll(timeout=1.0)
+                print('Running....')
+                msg = self.consumer.poll()
                 if msg is None:
                     continue
 
